@@ -39,6 +39,7 @@ public class LocalStorageService implements StorageService {
     }
 
     @Override
+    // TODO: add second param for prefix?
 	public void store(MultipartFile file) {
 		String filename = StringUtils.cleanPath(file.getOriginalFilename());
 		try {

@@ -22,6 +22,7 @@
 
             fileCatcher.addEventListener('submit', function (e) {
                 e.preventDefault();
+                sendOrder();
                 fileList.forEach(function (file) {
                     sendFile(file);
                 });
@@ -40,6 +41,15 @@
                 });
             });
 
+            sendOrder = function () {
+                // TODO: send another request of ordered list of files
+                // Call this first and block?
+                var orderRequest = new XMLHttpRequest();
+                orderRequest.open("POST", 'order');
+                orderRequest.send(fileListDisplay.innerHTML);
+
+            }
+
             sendFile = function (file) {
                 var formData = new FormData();
                 var request = new XMLHttpRequest();
@@ -47,6 +57,7 @@
                 formData.set('file', file);
                 request.open("POST", 'merger');
                 request.send(formData);
+
             };
         })();
   //]]></script>
