@@ -29,3 +29,9 @@ build/
 
 ### VS Code ###
 .vscode/
+alexismp-pdfmerger-9f2246ad7656.json
+mvnw
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/MavenWrapperDownloader.java
+tmp/
