@@ -1,30 +1,31 @@
 package org.alexismp.pdfmerger;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.StringTokenizer;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class FileOrderController {
-
-    private final List filesToMerge;
+	private final OrderService orderService;
 
 	@Autowired
-	public FileOrderController() {
-        this.filesToMerge = Collections.synchronizedList(new ArrayList());
+	public FileOrderController(final OrderService orderService) {
+		this.orderService = orderService;
 	}
 
 	@PostMapping("/order")
-	public String handleFileOrder( @RequestBody String orderedFiles ) {
-        System.out.println(orderedFiles);
+	public String handleFileOrder(@RequestBody final String orderedFiles) {
+		orderService.clear();
+		final StringTokenizer sb = new StringTokenizer(orderedFiles, "< >", false);
+		while (sb.hasMoreTokens()) {
+			final String fileName = sb.nextToken();
+			if (fileName.length() < 4 ) continue;	// <p> or 1. ... 12. (will break if more than 100 files selected)
+			orderService.addFile(fileName);
+		}
+        System.out.println(orderService.listAllFilesInOrder());
 		return "redirect:/";
 	}
 

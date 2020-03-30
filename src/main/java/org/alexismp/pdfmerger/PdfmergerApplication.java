@@ -13,9 +13,17 @@ public class PdfmergerApplication {
 	}
 
 	@Bean
-	CommandLineRunner init(StorageService storageService) {
+	CommandLineRunner init(StorageService storageService, OrderService orderService) {
 		return (args) -> {
 			storageService.init();
+			orderService.init();
 		};
 	}
+
+	// @Bean
+	// CommandLineRunner init(OrderService orderService) {
+	// 	return (args) -> {
+	// 		orderService.init();
+	// 	};
+	// }
 }

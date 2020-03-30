@@ -5,6 +5,7 @@
 </head>
 
 <body>
+    Select PDF files to merge (order matters):
     <form id="file-catcher" enctype="multipart/form-data">
         <input id="file-input" type="file" multiple />
         <input type="submit" value="Merge!" />
@@ -22,7 +23,6 @@
 
             fileCatcher.addEventListener('submit', function (e) {
                 e.preventDefault();
-                sendOrder();
                 fileList.forEach(function (file) {
                     sendFile(file);
                 });
@@ -39,6 +39,7 @@
                     fileDisplayEl.innerHTML = (index + 1) + ': ' + file.name;
                     fileListDisplay.appendChild(fileDisplayEl);
                 });
+                sendOrder();
             });
 
             sendOrder = function () {
@@ -47,7 +48,6 @@
                 var orderRequest = new XMLHttpRequest();
                 orderRequest.open("POST", 'order');
                 orderRequest.send(fileListDisplay.innerHTML);
-
             }
 
             sendFile = function (file) {
@@ -55,9 +55,8 @@
                 var request = new XMLHttpRequest();
 
                 formData.set('file', file);
-                request.open("POST", 'merger');
+                request.open("POST", 'uploader');
                 request.send(formData);
-
             };
         })();
   //]]></script>
