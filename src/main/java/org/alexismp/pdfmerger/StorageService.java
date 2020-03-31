@@ -1,17 +1,12 @@
 package org.alexismp.pdfmerger;
 
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 
 public interface StorageService {
 	void init();
-	void store(MultipartFile file);
-	void deleteAll();
-	int numFilesSaved();
-	Path getRootLocation();
-	void mergeFiles(List<String> filenames);
+	void storePDF(MultipartFile file);
+	void deleteTmpFiles();
+	void mergeFiles();
 	byte[] getMergedPDF() throws IOException;
 }

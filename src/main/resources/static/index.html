@@ -5,62 +5,24 @@
 </head>
 
 <body>
-    Select PDF files to merge (order matters):
-    <form id="file-catcher" enctype="multipart/form-data">
-        <input id="file-input" type="file" multiple />
+    <h1>PDF Merger</h1>
+    (40 MB max)
+    <form action="/pdfmerger" enctype="multipart/form-data" method="POST">
+        <table>
+            <tr>
+                <td><input name="files" type="file" /></td>
+            </tr>
+            <tr>
+                <td><input name="files" type="file" /></td>
+            </tr>
+            <tr>
+                <td><input name="files" type="file" /></td>
+            </tr>
+            <tr>
+                <td><input name="files" type="file" /></td>
+            </tr>
+        </table>
         <input type="submit" value="Merge!" />
     </form>
-    <div id="file-list-display"></div>
-
-    <script type="text/javascript">//<![CDATA[
-        (function () {
-            var fileCatcher = document.getElementById('file-catcher');
-            var fileInput = document.getElementById('file-input');
-            var fileListDisplay = document.getElementById('file-list-display');
-
-            var fileList = [];
-            var renderFileList, sendFile;
-
-            fileCatcher.addEventListener('submit', function (e) {
-                e.preventDefault();
-                fileList.forEach(function (file) {
-                    sendFile(file);
-                });
-            });
-
-            fileInput.addEventListener('change', function (e) {
-                fileList = [];
-                for (var i = 0; i < fileInput.files.length; i++) {
-                    fileList.push(fileInput.files[i]);
-                }
-                fileListDisplay.innerHTML = '';
-                fileList.forEach(function (file, index) {
-                    var fileDisplayEl = document.createElement('p');
-                    fileDisplayEl.innerHTML = (index + 1) + ': ' + file.name;
-                    fileListDisplay.appendChild(fileDisplayEl);
-                });
-                sendOrder();
-            });
-
-            sendOrder = function () {
-                // TODO: send another request of ordered list of files
-                // Call this first and block?
-                var orderRequest = new XMLHttpRequest();
-                orderRequest.open("POST", 'order');
-                orderRequest.send(fileListDisplay.innerHTML);
-            }
-
-            sendFile = function (file) {
-                var formData = new FormData();
-                var request = new XMLHttpRequest();
-
-                formData.set('file', file);
-                request.open("POST", 'uploader');
-                request.send(formData);
-            };
-        })();
-  //]]></script>
-
 </body>
-
 </html>
