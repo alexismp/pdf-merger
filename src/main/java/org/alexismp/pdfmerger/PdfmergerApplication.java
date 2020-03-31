@@ -20,10 +20,4 @@ public class PdfmergerApplication {
 		};
 	}
 
-	// @Bean
-	// CommandLineRunner init(OrderService orderService) {
-	// 	return (args) -> {
-	// 		orderService.init();
-	// 	};
-	// }
 }

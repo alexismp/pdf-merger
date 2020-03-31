@@ -2,11 +2,11 @@ package org.alexismp.pdfmerger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,14 +16,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class LocalStorageService implements StorageService {
-    private final Path rootLocation;
+	private final Path rootLocation;
+	private final Path resultFile;
+	private final String outputFilename = "output.pdf";
 	private int filesSaved;
 
     @Autowired
     public LocalStorageService() {
         // TODO: generate unique Id? Depends on concurrency
 		this.rootLocation = Paths.get("./tmp");
-		filesSaved = 0;
+		this.resultFile = Paths.get("./" + outputFilename);
+		// filesSaved = 0;
     }
 
     @Override
@@ -76,6 +79,40 @@ public class LocalStorageService implements StorageService {
 	@Override
 	public Path getRootLocation() {
 		return rootLocation;
+	}
+
+	@Override
+	public byte[] getMergedPDF() throws IOException {
+		return Files.readAllBytes(resultFile);
+	}
+
+	@Override
+	public void mergeFiles(List<String> filenames) {
+		final StringBuilder mergeCommand = new StringBuilder(
+				"/usr/bin/gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=");
+
+		mergeCommand.append(outputFilename);
+		mergeCommand.append(" ");
+		// add all files in the order they're specified
+		// final List<String> filenames = orderService.listAllFilesInOrder();
+		for (final String filename : filenames) {
+			mergeCommand.append(getRootLocation().toString() + "/" + filename);
+			mergeCommand.append(" ");
+		}
+		System.out.println("### Command: " + mergeCommand.toString());
+		final ProcessBuilder builder = new ProcessBuilder();
+		builder.command("sh", "-c", mergeCommand.toString());
+
+		try {
+			final Process process = builder.inheritIO().start();
+			final int exitCode = process.waitFor();
+			System.out.println("\nExited with error code : " + exitCode);
+		} catch (IOException | InterruptedException e) {
+			System.err.println(e);
+		}
+
+		// storageService.deleteAll();
+		// return "redirect:/";
 	}
 
 }
