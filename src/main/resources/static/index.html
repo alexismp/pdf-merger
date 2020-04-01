@@ -18,7 +18,8 @@ limitations under the License.
 
 <body>
     <h1>PDF Merger</h1>
-    (40 MB max)
+    <h2>Combine multiple PDF files into one</h2>
+    (40 MB for each file max)
     <form action="/pdfmerger" enctype="multipart/form-data" method="POST">
         <table>
             <tr>
@@ -34,7 +35,11 @@ limitations under the License.
                 <td><input name="files" type="file" /></td>
             </tr>
         </table>
+        <br/>
         <input type="submit" value="Merge!" />
     </form>
+
+    <br/><small>This demo app does not store any data.</small>
+    <br/><small><a href="https://twitter.com/alexismp">alexismp@</a></small>
 </body>
 </html>

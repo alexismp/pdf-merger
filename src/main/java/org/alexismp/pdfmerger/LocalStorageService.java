@@ -29,8 +29,10 @@ import java.util.List;
 
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LocalStorageService implements StorageService {
@@ -59,43 +61,48 @@ public class LocalStorageService implements StorageService {
 	@Override
 	public void storePDF(MultipartFile file) {
 		String filename = file.getOriginalFilename();
-		try {
-			if (!filename.endsWith(".pdf")) {
-				throw new IOException("This doesn't seem to be a PDF file: " + filename);
-			} else if (file.isEmpty()) {
-				throw new IOException("Failed to store empty file: " + filename);
-			} else if (filename.contains("..")) { // This is a security check
-				throw new IOException("Cannot store file with relative path outside current directory " + filename);
-			} else {
+		if (!filename.endsWith(".pdf")) {
+			logAndThrowException(HttpStatus.BAD_REQUEST, filename + " doesn't seem to be a PDF file.", null);
+		} else if (file.isEmpty()) {
+			logAndThrowException(HttpStatus.NO_CONTENT, filename + " is empty!", null);
+		} else if (filename.contains("..")) { // This is a security check
+			logAndThrowException(HttpStatus.FORBIDDEN, "Sorry, can't navigate the filesystem... "+ filename, null);
+		} else {
+			try {
 				InputStream inputStream = file.getInputStream();
 				Files.copy(inputStream, this.rootLocation.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-				System.out.println("Successfully saved " + filename);
+				System.out.println("Successfully saved " + filename); // TODO: consider not giving away filename
 				filesToMerge.add(filename);
+			} catch (IOException e) {
+				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store file " + filename, e);
 			}
-		} catch (IOException e) {
-			System.out.println("Failed to store file " + filename + " - " + e);
 		}
 	}
 
-	@Override
-	public void deleteTmpFiles() {
+	private void deleteTmpFiles() {
 		try {
 			FileUtils.cleanDirectory(rootLocation.toFile());
 			filesToMerge.clear();
 		} catch (IOException e) {
-			System.out.println("Unable to delete all files: " + e);
+			System.err.println("Unable to delete all files: " + e);
 		}
 	}
 
 	@Override
-	public byte[] getMergedPDF() throws IOException {
+	public byte[] getMergedPDF() {
 		if (!resultFile.toFile().exists()) {
-			throw new IOException("Nothing to see here!");
+			logAndThrowException(HttpStatus.FORBIDDEN, "Trying to access merged PDF file that doesn't exist", null);
+			return null;
 		}
-		byte[] result = Files.readAllBytes(resultFile);
-		byte[] resultCopy = Arrays.copyOf(result, result.length);
-		Files.delete(resultFile);
-		return resultCopy;
+		try {
+			byte[] result = Files.readAllBytes(resultFile);
+			byte[] resultCopy = Arrays.copyOf(result, result.length);
+			Files.delete(resultFile);
+			return resultCopy;
+		} catch (IOException ioe) {
+			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Error serving merged PDF, sorry!", ioe);
+			return null;
+		}
 	}
 
 	@Override
@@ -120,13 +127,23 @@ public class LocalStorageService implements StorageService {
 			final int exitCode = process.waitFor();
 			if (exitCode == 0) {
 				System.out.println("Success: merged " + filesToMerge.size() + " files.");
-				deleteTmpFiles();
 			} else {
-				System.out.println("Exited with error code : " + exitCode);
+				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Merging process exited with error code : " + exitCode, null);
 			}
 		} catch (IOException | InterruptedException e) {
-			System.err.println(e);
+			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong trying to merge with ghostscript! ",  e);
+		} finally {
+			deleteTmpFiles();
 		}
 	}
 
+	@Override
+	public int numberOfFilesToMerge() {
+		return filesToMerge.size();
+	}
+
+	private void logAndThrowException (HttpStatus status, String msg, Throwable e) {
+		System.err.println(msg);
+		throw new ResponseStatusException(status, msg, e);
+	}
 }

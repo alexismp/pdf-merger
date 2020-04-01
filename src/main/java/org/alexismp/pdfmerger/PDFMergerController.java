@@ -16,8 +16,6 @@
  */
 package org.alexismp.pdfmerger;
 
-import java.io.IOException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -37,14 +35,18 @@ public class PDFMergerController {
 	}
 
 	@PostMapping(value = "/pdfmerger", produces = MediaType.APPLICATION_PDF_VALUE)
-	public @ResponseBody() byte[] handleFileUpload(@RequestParam("files") final MultipartFile[] files) throws IOException {
+	public @ResponseBody() byte[] handleFileUpload(@RequestParam("files") final MultipartFile[] files) {
 		for (MultipartFile file : files) {
 			if (!file.getOriginalFilename().isEmpty()) {
 				storageService.storePDF(file);
 			}
 		}
-		storageService.mergeFiles();
-		return storageService.getMergedPDF();
+		if (storageService.numberOfFilesToMerge() != 0) {
+			storageService.mergeFiles();
+			return storageService.getMergedPDF();
+		} else {
+			return null;
+		}
 	}
 
 }
