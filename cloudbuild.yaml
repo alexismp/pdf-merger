@@ -9,7 +9,7 @@ steps:
   #   - com.google.cloud.tools:jib-maven-plugin:build
 
 # deploy revision to Cloud Run
-#   docker run deploy pdf-merger-2 --quiet --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
+#   gcloud run deploy --quiet pdf-merger-2 --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
   - id: cloudrun-revision-deploy
     name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -20,6 +20,6 @@ steps:
         "pdf-merger-2",
         "--region=europe-west1",
         "--platform=managed",
-        "--no-traffic",
+        # "--no-traffic",
         "--image=gcr.io/alexismp-pdfmerger/pdfmerger:latest"
       ]
