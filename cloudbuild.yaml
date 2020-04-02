@@ -11,7 +11,7 @@
     
 steps:
 # build & push with jib:
-  mvn compile jib:build
+#  mvn compile jib:build
   - id: jib-compile-push
     name: "gcr.io/cloud-builders/mvn"
     args:
