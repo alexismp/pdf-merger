@@ -20,13 +20,13 @@ steps:
     - com.google.cloud.tools:jib-maven-plugin:build
 
 # deploy revision to Cloud Run
-#   gcloud run services update --no-prompt pdf-merger-2 --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
+#   gcloud run deploy --no-prompt pdf-merger-2 --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
   - id: cloudrun-revision-deploy
     name: "gcr.io/cloud-builders/gcloud"
     args:
       [
         "run",
-        "services update",
+        "deploy",
         "--no-prompt",
         "pdf-merger-2",
         "--region=europe-west1",
