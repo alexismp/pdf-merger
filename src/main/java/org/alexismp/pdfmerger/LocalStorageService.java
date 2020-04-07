@@ -95,6 +95,7 @@ public class LocalStorageService implements StorageService {
 			return null;
 		}
 		try {
+			// TODO: write to OutputStream and delete file (no copying)
 			byte[] result = Files.readAllBytes(resultFile);
 			byte[] resultCopy = Arrays.copyOf(result, result.length);
 			Files.delete(resultFile);
@@ -114,11 +115,10 @@ public class LocalStorageService implements StorageService {
 		mergeCommand.append(" ");
 		// add all files in the order they're specified
 		for (final String filename : filesToMerge) {
-			mergeCommand.append(rootLocation.toString());
-			mergeCommand.append("/");
-			mergeCommand.append(filename.replaceAll("\\s", "\\\\ ")); // escape spaces in filename
-			mergeCommand.append(" ");
+			String newFile = "'" + rootLocation.toString() + "/" + filename  + "' ";
+			mergeCommand.append(newFile);
 		}
+		System.out.println(mergeCommand.toString());
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
 
