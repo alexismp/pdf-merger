@@ -46,7 +46,8 @@ Deploy to Cloud Run using (or use the [console](https://console.cloud.google.com
 `$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed`
 
 ## Deploy with Cloud Run
- Todo: Cloud Run button
+
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
 
 
 ## Resources
