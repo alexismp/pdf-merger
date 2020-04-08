@@ -16,6 +16,7 @@
  */
 package org.alexismp.pdfmerger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -26,8 +27,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,16 +38,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LocalStorageService implements StorageService {
-	private final Path rootLocation;
-	private final Path resultFile;
+	private final Path rootLocation = Paths.get("./tmp");
 	private final String outputFilename = "output.pdf";
-	private List<String> filesToMerge;
+	private Map<String, List<Path>> allFiles;
 
 	@Autowired
 	public LocalStorageService() {
-		this.filesToMerge = Collections.synchronizedList(new ArrayList<String>());
-		this.rootLocation = Paths.get("./tmp");
-		this.resultFile = Paths.get("./" + outputFilename);
+		allFiles = new ConcurrentHashMap<>();
 	}
 
 	@Override
@@ -54,12 +53,24 @@ public class LocalStorageService implements StorageService {
 			Files.createDirectories(rootLocation);
 			System.out.println("Created temporary directory...");
 		} catch (IOException e) {
-			System.out.println("Could not initialize storage - " + e);
+			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not initialize storage!", e);
 		}
 	}
 
 	@Override
-	public void storePDF(MultipartFile file) {
+	public void storePDF(MultipartFile file, String idPrefix) {
+		// create a unique temp directory for this set of files and an ordered list of files to merge
+		List<Path> filesToMerge;
+		File dirTmpFiles = new File(rootLocation + "/" + idPrefix);
+
+		if (allFiles.containsKey(idPrefix)) {
+			filesToMerge = allFiles.get(idPrefix);
+		} else {
+			filesToMerge = Collections.synchronizedList(new ArrayList<Path>());
+			allFiles.put(idPrefix, filesToMerge);
+			dirTmpFiles.mkdir();
+		}
+
 		String filename = file.getOriginalFilename();
 		if (!filename.endsWith(".pdf")) {
 			logAndThrowException(HttpStatus.BAD_REQUEST, filename + " doesn't seem to be a PDF file.", null);
@@ -70,32 +81,24 @@ public class LocalStorageService implements StorageService {
 		} else {
 			try {
 				InputStream inputStream = file.getInputStream();
-				Files.copy(inputStream, this.rootLocation.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
-				System.out.println("Successfully saved " + filename); // TODO: consider not giving away filename
-				filesToMerge.add(filename);
+				Path tmpFile = Paths.get(dirTmpFiles.getPath(), file.getOriginalFilename());
+				Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+				System.out.println("Successfully saved " + tmpFile.toString());
+				filesToMerge.add(tmpFile);
 			} catch (IOException e) {
-				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store file " + filename, e);
+				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store file " + file, e);
 			}
 		}
 	}
 
-	private void deleteTmpFiles() {
-		try {
-			FileUtils.cleanDirectory(rootLocation.toFile());
-			filesToMerge.clear();
-		} catch (IOException e) {
-			System.err.println("Unable to delete all files: " + e);
-		}
-	}
-
 	@Override
-	public byte[] getMergedPDF() {
+	public byte[] getMergedPDF(String idPrefix) {
+		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
 		if (!resultFile.toFile().exists()) {
 			logAndThrowException(HttpStatus.FORBIDDEN, "Trying to access merged PDF file that doesn't exist", null);
 			return null;
 		}
 		try {
-			// TODO: write to OutputStream and delete file (no copying)
 			byte[] result = Files.readAllBytes(resultFile);
 			byte[] resultCopy = Arrays.copyOf(result, result.length);
 			Files.delete(resultFile);
@@ -107,18 +110,21 @@ public class LocalStorageService implements StorageService {
 	}
 
 	@Override
-	public void mergeFiles() {
+	public void mergeFiles(String idPrefix) {
+		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
 		final StringBuilder mergeCommand = new StringBuilder(
 				"/usr/bin/gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=");
 
-		mergeCommand.append(outputFilename);
+		mergeCommand.append(resultFile.toString());
 		mergeCommand.append(" ");
 		// add all files in the order they're specified
-		for (final String filename : filesToMerge) {
-			String newFile = "'" + rootLocation.toString() + "/" + filename  + "' ";
+		List<Path> filesToMerge = allFiles.get(idPrefix);
+		System.out.println("About to merge " + filesToMerge.size() + " files");
+		for (final Path filename : filesToMerge) {
+			String newFile = "'" + filename.toString() + "' ";
 			mergeCommand.append(newFile);
 		}
-		System.out.println(mergeCommand.toString());
+		System.out.println("# Merge command : " + mergeCommand.toString());
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
 
@@ -128,21 +134,33 @@ public class LocalStorageService implements StorageService {
 			if (exitCode == 0) {
 				System.out.println("Success: merged " + filesToMerge.size() + " files.");
 			} else {
-				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Merging process exited with error code : " + exitCode, null);
+				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"Merging process exited with error code : " + exitCode, null);
 			}
 		} catch (IOException | InterruptedException e) {
-			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong trying to merge with ghostscript! ",  e);
+			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"Something went wrong trying to merge with ghostscript! ", e);
 		} finally {
-			deleteTmpFiles();
+			// clean up master Map and delete directory
+			try {
+				allFiles.remove(idPrefix);
+				Files.walk(Paths.get(rootLocation + "/" + idPrefix))
+						// .sorted(Comparator.reverseOrder())
+						.map(Path::toFile).forEach(File::delete);
+				// FileUtils.cleanDirectory(new File(rootLocation + idPrefix));
+				// filesToMerge.clear();
+			} catch (IOException e) {
+				System.err.println("Unable to delete all files: " + e);
+			}
 		}
 	}
 
 	@Override
-	public int numberOfFilesToMerge() {
-		return filesToMerge.size();
+	public int numberOfFilesToMerge(String idPrefix) {
+		return allFiles.get(idPrefix).size();
 	}
 
-	private void logAndThrowException (HttpStatus status, String msg, Throwable e) {
+	private void logAndThrowException(HttpStatus status, String msg, Throwable e) {
 		System.err.println(msg);
 		throw new ResponseStatusException(status, msg, e);
 	}

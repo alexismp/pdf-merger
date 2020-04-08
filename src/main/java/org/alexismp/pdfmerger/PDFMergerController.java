@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @Controller
 public class PDFMergerController {
 
@@ -36,14 +38,17 @@ public class PDFMergerController {
 
 	@PostMapping(value = "/pdfmerger", produces = MediaType.APPLICATION_PDF_VALUE)
 	public @ResponseBody() byte[] handleFileUpload(@RequestParam("files") final MultipartFile[] files) {
+		UUID prefix = UUID.randomUUID();
+
 		for (MultipartFile file : files) {
-			if (!file.getOriginalFilename().isEmpty()) {
-				storageService.storePDF(file);
+			if (!file.getOriginalFilename().isEmpty()) { // ignore empty form inputs
+				storageService.storePDF(file, prefix.toString());
 			}
 		}
-		if (storageService.numberOfFilesToMerge() != 0) {
-			storageService.mergeFiles();
-			return storageService.getMergedPDF();
+
+		if (storageService.numberOfFilesToMerge(prefix.toString()) != 0) {
+			storageService.mergeFiles(prefix.toString());
+			return storageService.getMergedPDF(prefix.toString());
 		} else {
 			return null;
 		}

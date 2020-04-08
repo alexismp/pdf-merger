@@ -20,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
 	void init();
-	void storePDF(MultipartFile file);
-	byte[] getMergedPDF();
-	void mergeFiles();
-	int numberOfFilesToMerge();
+	void storePDF(MultipartFile file, String idPrefix);
+	byte[] getMergedPDF(String idPrefix);
+	void mergeFiles(String idPrefix);
+	int numberOfFilesToMerge(String idPrefix);
 }
