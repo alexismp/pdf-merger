@@ -26,7 +26,7 @@
 	<description>PDF merger</description>
 
 	<properties>
-		<java.version>11</java.version>
+		<java.version>8</java.version>
 		<spring-cloud.version>Hoxton.SR3</spring-cloud.version>
 	</properties>
 
@@ -60,11 +60,8 @@
 				<version>2.1.0</version>
 				<configuration>
 					<from>
-						<image>alexismp/openjdk11-ghostscript</image>
+						<image>gcr.io/alexismp-pdfmerger/openjdk11-ghostscript</image>
 					</from>
-					<to>
-						<image>gcr.io/alexismp-pdfmerger/pdfmerger</image>
-					</to>
 				</configuration>
 			</plugin>
 		</plugins>

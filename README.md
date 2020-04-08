@@ -45,10 +45,11 @@ Deploy to Cloud Run using (or use the [console](https://console.cloud.google.com
 
 `$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed`
 
+You can also deploy using this pre-built public image: `gcr.io/alexismp-pdfmerger/pdfmerger`
+
 ## Deploy with Cloud Run
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
-
 
 ## Resources
 * [Magic ghostscript command](https://stackoverflow.com/questions/2507766/merge-convert-multiple-pdf-files-into-one-pdf)

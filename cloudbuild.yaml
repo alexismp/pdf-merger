@@ -18,6 +18,7 @@ steps:
     - compile
     - -X
     - com.google.cloud.tools:jib-maven-plugin:build
+    - -Dimage=gcr.io/${PROJECT_ID}/pdfmerger
 
 # deploy revision to Cloud Run
 #   gcloud run deploy --no-prompt pdf-merger-2 --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
