@@ -27,7 +27,7 @@ steps:
       [
         "run",
         "deploy",
-        "--no-prompt",
+        "--quiet",
         "pdf-merger-2",
         "--region=europe-west1",
         "--platform=managed",
