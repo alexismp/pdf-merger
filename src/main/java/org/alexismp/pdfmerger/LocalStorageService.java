@@ -124,7 +124,6 @@ public class LocalStorageService implements StorageService {
 			String newFile = "'" + filename.toString() + "' ";
 			mergeCommand.append(newFile);
 		}
-		System.out.println("# Merge command : " + mergeCommand.toString());
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
 
@@ -144,11 +143,11 @@ public class LocalStorageService implements StorageService {
 			// clean up master Map and delete directory
 			try {
 				allFiles.remove(idPrefix);
-				Files.walk(Paths.get(rootLocation + "/" + idPrefix))
-						// .sorted(Comparator.reverseOrder())
-						.map(Path::toFile).forEach(File::delete);
-				// FileUtils.cleanDirectory(new File(rootLocation + idPrefix));
-				// filesToMerge.clear();
+				Path dir = Paths.get(rootLocation + "/" + idPrefix);
+				Files.walk(dir)
+						.map(Path::toFile)
+						.forEach(File::delete);
+				Files.delete(dir);
 			} catch (IOException e) {
 				System.err.println("Unable to delete all files: " + e);
 			}

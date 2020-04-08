@@ -27,7 +27,9 @@ I am not interested in developing features to store any data in file storage ser
 
 ## A word on concurrency
 
-Concurrency can be hard.
+Concurrency can be hard. This implementation accounts for Cloud Run's built-in [concurrency](https://cloud.google.com/run/docs/about-concurrency) to make sure multiple users don't end up mixing their files (ugh!) since they share the same filesystem. I’m grouping files by user with a common prefix and preserving their order in a List.
+
+You could use a simpler implementation and set the concurrency of Cloud Run to 1, essentially mimicking what FaaS products usually do, but this would likely increase the number of cold starts and thus worsen the user experience.
 
 ## Getting started
 
