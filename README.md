@@ -5,9 +5,9 @@ This small Java 11 SpringBoot app merges PDF files (think multiple page scans in
 
 Don't judge the HTML.
 
-In contrast with the online options already available to merge PDF into one, while very basic, this solution here can be used as a regular Spring Boot app, a standalone Docker image, or better yet, deployed to [Cloud Run](cloud.run). The application can also be improved in many ways, and mostly on the UI/UX front (see the Contributing section below). It shouldn't also not be too hard for folks to adapt the code to turn this into a service instead of a web app.
+In contrast with the online options already available to merge PDF into one, while very basic, this solution here can be used as a regular Spring Boot app, a standalone Docker image, or better yet, deployed to [Cloud Run](cloud.run). The application can also be improved in many ways, and mostly on the UI/UX front (see the [Contributing](#a-word-on-contributing) section below). It shouldn't also not be too hard for folks to adapt the code to turn this into a service instead of a web app.
 
-If you'd like to become a hero and make this available as a service for your friends and family or for your company then deploying this container image to Cloud Run (see 'Getting started' section below) is an interesting option. You should also be able to deploy this to [Cloud Run on GKE](https://cloud.google.com/run/docs/gke/setup) if you'd rather run on a different environment.
+If you'd like to become a hero and make this available as a service for your friends and family or for your company then deploying this container image to Cloud Run (see the [Getting started](#getting-started) section below) is an interesting option. You should also be able to deploy this to [Cloud Run on GKE](https://cloud.google.com/run/docs/gke/setup) if you'd rather run on a different environment.
 
 ## A word on contributing
 
