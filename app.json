@@ -1,0 +1,12 @@
+{
+    "build": {
+        "skip": true
+    },
+    "hooks": {
+        "prebuild": {
+            "commands": [
+                "HOME=.. pack build --builder heroku/buildpacks $IMAGE_URL"
+            ]
+        }
+    }
+}
