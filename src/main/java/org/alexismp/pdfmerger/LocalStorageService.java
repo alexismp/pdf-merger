@@ -113,7 +113,6 @@ public class LocalStorageService implements StorageService {
 	public void mergeFiles(String idPrefix) {
 		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
 		final StringBuilder mergeCommand = new StringBuilder("/usr/bin/pdfunite ");
-				// "/usr/bin/gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=");
 
 		// add all files in the order they're specified
 		List<Path> filesToMerge = allFiles.get(idPrefix);
