@@ -51,6 +51,7 @@ public class LocalStorageService implements StorageService {
 		try {
 			Files.createDirectories(rootLocation);
 			System.out.println("Created temporary directory...");
+			// This could also be a good place to test that the binary used is actually available
 		} catch (IOException e) {
 			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not initialize storage!", e);
 		}
@@ -111,11 +112,9 @@ public class LocalStorageService implements StorageService {
 	@Override
 	public void mergeFiles(String idPrefix) {
 		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
-		final StringBuilder mergeCommand = new StringBuilder(
-				"/usr/bin/gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=");
+		final StringBuilder mergeCommand = new StringBuilder("/usr/bin/pdfunite ");
+				// "/usr/bin/gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=");
 
-		mergeCommand.append(resultFile.toString());
-		mergeCommand.append(" ");
 		// add all files in the order they're specified
 		List<Path> filesToMerge = allFiles.get(idPrefix);
 		System.out.println("About to merge " + filesToMerge.size() + " files");
@@ -123,8 +122,12 @@ public class LocalStorageService implements StorageService {
 			String newFile = "'" + filename.toString() + "' ";
 			mergeCommand.append(newFile);
 		}
+		mergeCommand.append(" ");
+		mergeCommand.append(resultFile.toString()); 	// output goes last with 'pdfunite'
+
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
+		System.out.println("### pdfunite command ready: " + mergeCommand);
 
 		try {
 			final Process process = builder.inheritIO().start();
