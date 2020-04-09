@@ -1,7 +1,7 @@
 # Your own PDF Merger (as a Service)
 
 ## Merge multiple PDF files into one
-This small Java 11 SpringBoot app merges PDF files (think multiple page scans into one file) using a magic ghostscript command.
+This small Java 11 SpringBoot app merges PDF files (think multiple page scans into one file) using a simple Linux command.
 
 Don't judge the HTML.
 
@@ -41,9 +41,9 @@ Run locally using Docker :
 
 `docker run -p 8080:8080 -t gcr.io/PROJECT-ID/pdfmerger`
 
-Deploy to Cloud Run using (or use the [console](https://console.cloud.google.com/run)) :
+Deploy to Cloud Run using this command (or use the [console](https://console.cloud.google.com/run)) :
 
-`$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed`
+`$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed --allow-unauthenticated --memory=1024Mi `
 
 You can also deploy using this pre-built public image: `gcr.io/alexismp-pdfmerger/pdfmerger`
 
@@ -52,10 +52,8 @@ You can also deploy using this pre-built public image: `gcr.io/alexismp-pdfmerge
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
 
 ## Resources
-* [Magic ghostscript command](https://stackoverflow.com/questions/2507766/merge-convert-multiple-pdf-files-into-one-pdf)
 * [Deploy to Cloud Run](https://cloud.google.com/run/docs/quickstarts/build-and-deploy)
 * [Jib, Containerize your Java application](https://github.com/GoogleContainerTools/jib)
-* [Java 11 and ghostscript Dockerhub-hosted image](https://hub.docker.com/repository/docker/alexismp/openjdk11-ghostscript)
 
 ### Disclaimer
 

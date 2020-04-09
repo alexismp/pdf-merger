@@ -60,7 +60,7 @@
 				<version>2.1.0</version>
 				<configuration>
 					<from>
-						<image>gcr.io/alexismp-pdfmerger/openjdk11-ghostscript</image>
+						<image>gcr.io/alexismp-pdfmerger/openjdk11-gs</image>
 					</from>
 				</configuration>
 			</plugin>

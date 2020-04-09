@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -99,10 +98,10 @@ public class LocalStorageService implements StorageService {
 			return null;
 		}
 		try {
+			// read files in memory before deleting file
 			byte[] result = Files.readAllBytes(resultFile);
-			byte[] resultCopy = Arrays.copyOf(result, result.length);
 			Files.delete(resultFile);
-			return resultCopy;
+			return result;
 		} catch (IOException ioe) {
 			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Error serving merged PDF, sorry!", ioe);
 			return null;
@@ -138,7 +137,7 @@ public class LocalStorageService implements StorageService {
 			}
 		} catch (IOException | InterruptedException e) {
 			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"Something went wrong trying to merge with ghostscript! ", e);
+					"Something went wrong trying to merge ! ", e);
 		} finally {
 			// clean up master Map and delete directory
 			try {
