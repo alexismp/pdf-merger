@@ -5,7 +5,7 @@
     "hooks": {
         "prebuild": {
             "commands": [
-                "HOME=.. pack build $IMAGE_URL"
+                "HOME=.. pack build --builder heroku/buildpacks $IMAGE_URL"
             ]
         }
     }
