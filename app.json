@@ -1,0 +1,12 @@
+{
+    "build": {
+        "skip": true
+    },
+    "hooks": {
+        "prebuild": {
+            "commands": [
+                "pack build $IMAGE_URL"
+            ]
+        }
+    }
+}
