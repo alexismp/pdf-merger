@@ -39,7 +39,7 @@ Deploy to Cloud Run using this command (or use the [console](https://console.clo
 
 `$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed --allow-unauthenticated --memory=1024Mi `
 
-You can also deploy this pre-built public image: `gcr.io/alexismp-pdfmerger/pdfmerger`
+You can also deploy this pre-built public image: `gcr.io/alexismp-pdfmerger/pdfmerger-unite`
 
 ## A word on concurrency
 

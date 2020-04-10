@@ -21,7 +21,7 @@ steps:
     - -Dimage=gcr.io/${PROJECT_ID}/pdfmerger
 
 # deploy revision to Cloud Run
-#   gcloud run deploy --no-prompt pdf-merger-2 --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger:latest
+#   gcloud run deploy --quiet pdf-merger-unite --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger-unite:latest
   - id: cloudrun-revision-deploy
     name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -29,9 +29,9 @@ steps:
         "run",
         "deploy",
         "--quiet",
-        "pdf-merger-2",
+        "pdf-merger-unite",
         "--region=europe-west1",
         "--platform=managed",
         # "--no-traffic",
-        "--image=gcr.io/alexismp-pdfmerger/pdfmerger:latest"
+        "--image=gcr.io/alexismp-pdfmerger/pdfmerger-unite:latest"
       ]
