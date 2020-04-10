@@ -5,7 +5,7 @@
     "hooks": {
         "prebuild": {
             "commands": [
-                "HOME=.. pack build --builder heroku/buildpacks $IMAGE_URL"
+                "HOME=.. JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 PATH=$JAVA_HOME/bin:$PATH mvn compile jib:build -Dimage=$IMAGE_URL"
             ]
         }
     }
