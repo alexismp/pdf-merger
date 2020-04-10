@@ -23,10 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +69,7 @@ public class LocalStorageService implements StorageService {
 		}
 
 		String filename = file.getOriginalFilename();
-		if (!filename.endsWith(".pdf")) {
+		if (!Objects.requireNonNull(filename).endsWith(".pdf")) {
 			logAndThrowException(HttpStatus.BAD_REQUEST, filename + " doesn't seem to be a PDF file.", null);
 		} else if (file.isEmpty()) {
 			logAndThrowException(HttpStatus.NO_CONTENT, filename + " is empty!", null);

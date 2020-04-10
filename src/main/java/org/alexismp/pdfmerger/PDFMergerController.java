@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Controller
@@ -41,7 +42,7 @@ public class PDFMergerController {
 		UUID prefix = UUID.randomUUID();
 
 		for (MultipartFile file : files) {
-			if (!file.getOriginalFilename().isEmpty()) { // ignore empty form inputs
+			if (!Objects.requireNonNull(file.getOriginalFilename()).isEmpty()) { // ignore empty form inputs
 				storageService.storePDF(file, prefix.toString());
 			}
 		}
