@@ -14,32 +14,35 @@ limitations under the License.
 
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="./MVP.css">
+    <title>PDF Merger</title>
 </head>
 
 <body>
-    <h1>PDF Merger</h1>
-    <h2>Combine multiple PDF files into one</h2>
-    (max 40 MB per file)
-    <form action="/pdfmerger" enctype="multipart/form-data" method="POST">
-        <table>
-            <tr>
-                <td><input name="files" type="file" /></td>
-            </tr>
-            <tr>
-                <td><input name="files" type="file" /></td>
-            </tr>
-            <tr>
-                <td><input name="files" type="file" /></td>
-            </tr>
-            <tr>
-                <td><input name="files" type="file" /></td>
-            </tr>
-        </table>
-        <br/>
-        <input type="submit" value="Merge!" />
-    </form>
+    <header>
+        <h1>Just Another PDF Merger</h1>
+    </header>
+    <main>
+        <form action="/pdfmerger" enctype="multipart/form-data" method="POST">
+            Merge multiple PDF files into one :
+            <br/><br/>
+            <input name="files" type="file" />
+            <input name="files" type="file" />
+            <input name="files" type="file" />
+            <input name="files" type="file" />
+            (max 40 MB per file)
+            <br/><br/>
+            <input type="submit" value="Merge!" />
+            <br/>
+        </form>
+    </main>
 
-    <br/><small>This sample demo app does not store any data.</small>
-    <br/><small>Code hosted on <a href="https://github.com/alexismp/pdf-merger" target="_blank">GitHub</a> and deployed using <a href="https://cloud.google.com/run" target="_blank">Cloud Run</a></small>
+    <hr>
+    <footer>
+        This sample demo app does not store any data.
+        <br />Code hosted on <a href="https://github.com/alexismp/pdf-merger" target="_blank">GitHub</a> and
+        deployed using <a href="https://cloud.google.com/run" target="_blank">Cloud Run</a>
+    </footer>
 </body>
+
 </html>
