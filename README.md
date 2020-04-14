@@ -3,8 +3,7 @@
 ## Merge multiple PDF files into one
 
 This small web app merges PDF files (think multiple page scans into one file) using a simple Linux command.
-
-Don't judge the HTML.
+A service based on this code is running [here](https://pdf-merger-unite-nmv4siw5tq-ew.a.run.app/). Don't judge the HTML.
 
 In contrast with the online services available to merge PDF into one, while very basic, this solution here can be used as a regular Spring Boot app, a standalone Docker image, or better yet, deployed to [Cloud Run](cloud.run). The application can also be improved in many ways, and mostly on the UI/UX front (see the [Contributing](#a-word-on-contributing) section below). It shouldn't also not be too hard for folks to adapt the code to turn this into a service instead of a web app.
 
@@ -33,7 +32,7 @@ Build and create a container image using [Jib](https://github.com/GoogleContaine
 
 Run locally using Docker :
 
-`docker run -p 8080:8080 -t gcr.io/PROJECT-ID/pdfmerger`
+`$ docker run -p 8080:8080 -t gcr.io/PROJECT-ID/pdfmerger`
 
 Deploy to Cloud Run using this command (or use the [console](https://console.cloud.google.com/run)) :
 
