@@ -126,7 +126,6 @@ public class LocalStorageService implements StorageService {
 
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
-		System.out.println("### pdfunite command ready: " + mergeCommand);
 
 		try {
 			final Process process = builder.inheritIO().start();
