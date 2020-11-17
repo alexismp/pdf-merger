@@ -30,7 +30,7 @@ Run locally (no docker involved) :
 
 `$ mvn spring-boot:run`
 
-Build and create a container image using [Jib](https://github.com/GoogleContainerTools/jib) :
+Build and create a container image using [Jib](https://github.com/GoogleContainerTools/jib) (using a base image which contains `openjdk11` and the `pdfunite` binary):
 
 `$ mvn compile jib:build -Dimage=<your image, eg. gcr.io/PROJECT-ID/pdfmerger>`
 
