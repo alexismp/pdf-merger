@@ -5,14 +5,14 @@
 This small web app merges PDF files (think multiple page scans into one file) using a simple Linux command.
 A service based on this code is running [here](https://pdf-merger-unite-nmv4siw5tq-ew.a.run.app/). Don't judge the HTML.
 
-In contrast with the online services available to merge PDF into one, while very basic, this solution here can be used as a regular Spring Boot app, a standalone Docker image, or better yet, deployed to [Cloud Run](cloud.run). The application can also be improved in many ways, and mostly on the UI/UX front (see the [Contributing](#a-word-on-contributing) section below). It shouldn't also not be too hard for folks to adapt the code to turn this into a service instead of a web app.
+In contrast with other services available online to merge multiple PDF files into one, this solution can be used as a regular Spring Boot app, a standalone Docker image, or better yet, deployed to [Cloud Run](cloud.run). The application can be improved in many ways such as on UI/UX front (see the [Contributing](#a-word-on-contributing) section below). It should also not be too hard for folks to adapt the code to turn this into a headless service instead of a web app.
 
-If you'd like to make this available as a service for your friends and family or for your company then deploying this container image to Cloud Run (see the [Getting started](#getting-started) section below) is an interesting option. You should also be able to deploy this to [Cloud Run on GKE](https://cloud.google.com/run/docs/gke/setup) if you'd rather run on a different environment.
+If you'd like to make this available as a service for your friends and family or within your company to avoid sharing files with random online services, then deploying this container image to Cloud Run (see the [Getting started](#getting-started) section below) is an interesting option. You should also be able to deploy this to [Cloud Run on GKE](https://cloud.google.com/run/docs/gke/setup) if you'd rather run on a different environment.
 
 ## A word on privacy
 
-This app uses only the container's local filesystem and deletes all files after the merged PDF document has been generated.
-I am not interested in developing features to store any data in file storage services of any kind.
+This app uses only the container's local filesystem and deletes all files after the merged PDF document has been generated (or if the merge failed for some reason).
+I am not interested in developing features to store any data in file storage services of any kind for this application.
 
 ## Getting started, the easy way
 
@@ -59,8 +59,7 @@ Yes, the UI is crap and the UX is just as bad. Some improvement ideas include :
 * re-order files before uploading them (in which case a single input for mutiple files could work)
 * provide an upload tracker for large files
 * preview files before they're uploaded
-* client-side testing that the files actually contain PDF
-* (simple and small UI/UX improvements)
+* client-side testing that the files actually contain PDF (server-side testing is implemented)
 
 ### Disclaimer
 
