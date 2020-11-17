@@ -9,6 +9,10 @@ In contrast with other services available online to merge multiple PDF files int
 
 If you'd like to make this available as a service for your friends and family or within your company to avoid sharing files with random online services, then deploying this container image to Cloud Run (see the [Getting started](#getting-started) section below) is an interesting option. You should also be able to deploy this to [Cloud Run on GKE](https://cloud.google.com/run/docs/gke/setup) if you'd rather run on a different environment.
 
+## Using pdfunite under the covers
+
+The heavy lifting is done by executing `pdfunite`, a Linux command-line tool available [here](https://github.com/mtgrosser/pdfunite). Execution is implemented using `ProcessBuilder` and the presence of the binary is guaranteed by packaging the app into a continer using [Jib](https://github.com/GoogleContainerTools/jib) together with a base image containing both `openjdk` and `pdfunite`.
+
 ## A word on privacy
 
 This app uses only the container's local filesystem and deletes all files after the merged PDF document has been generated (or if the merge failed for some reason).
