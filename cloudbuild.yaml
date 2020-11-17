@@ -33,5 +33,5 @@ steps:
         "--region=europe-west1",
         "--platform=managed",
         # "--no-traffic",
-        "--image=gcr.io/alexismp-pdfmerger/pdfmerger-unite:latest"
+        "--image=gcr.io/${PROJECT_ID}/pdfmerger-unite:latest"
       ]
