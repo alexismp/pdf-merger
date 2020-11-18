@@ -54,6 +54,8 @@ steps:
         "run",
         "services",
         "update-traffic",
+        "--region=europe-west1",
+        "--platform=managed",        
         "pdf-merger",
         "--to-latest"
       ]        
