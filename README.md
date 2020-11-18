@@ -36,11 +36,11 @@ Build and create a container image using [Jib](https://github.com/GoogleContaine
 
 Run locally using Docker :
 
-`$ docker run -p 8080:8080 -t gcr.io/PROJECT-ID/pdfmerger`
+`$ docker run -p 8080:8080 -t gcr.io/${PROJECT-ID}/pdfmerger`
 
 Deploy to Cloud Run using this command (or use the [console](https://console.cloud.google.com/run)) :
 
-`$ gcloud run deploy --image gcr.io/PROJECT-ID/pdfmerger --platform managed --allow-unauthenticated --memory=1024Mi `
+`$ gcloud run deploy --image gcr.io/${PROJECT-ID}/pdfmerger --platform managed --allow-unauthenticated --memory=1024Mi `
 
 You can also deploy this pre-built public image: `gcr.io/alexismp-pdfmerger/pdfmerger-unite`
 
