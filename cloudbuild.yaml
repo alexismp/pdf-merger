@@ -44,3 +44,16 @@ steps:
         "--image=gcr.io/${PROJECT_ID}/pdfmerger",
         "pdf-merger"
       ]
+
+# Assign 100% of traffic to the current revision:
+# $ gcloud run services update-traffic pdf-merger --to-latest
+  - id: cloudrun-promote-revision
+    name: "gcr.io/cloud-builders/gcloud"
+    args:
+      [
+        "run",
+        "services",
+        "update-traffic",
+        "pdf-merger",
+        "--to-latest"
+      ]        
