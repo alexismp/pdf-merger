@@ -156,6 +156,8 @@ public class LocalStorageService implements StorageService {
 
 	@Override
 	public int numberOfFilesToMerge(String idPrefix) {
+        List<Path> prefixedFiles = allFiles.get(idPrefix);
+        if (allFiles == null || prefixedFiles == null) return 0;
 		return allFiles.get(idPrefix).size();
 	}
 

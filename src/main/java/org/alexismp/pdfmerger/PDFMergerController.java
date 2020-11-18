@@ -49,7 +49,7 @@ public class PDFMergerController {
 		if (storageService.numberOfFilesToMerge(prefix.toString()) != 0) {
 			storageService.mergeFiles(prefix.toString());
 			return storageService.getMergedPDF(prefix.toString());
-		} else {
+		} else { // no files to merge
 			return null;
 		}
 	}
