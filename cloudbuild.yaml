@@ -21,7 +21,14 @@ steps:
     - -Dimage=gcr.io/${PROJECT_ID}/pdfmerger
 
 # deploy revision to Cloud Run
-#   gcloud run deploy --quiet pdf-merger-unite --region=europe-west1 --platform=managed --no-traffic --image gcr.io/alexismp-pdfmerger/pdfmerger-unite:latest
+#   gcloud run deploy --quiet
+#                     --allow-unauthenticated
+#                     --region=europe-west1
+#                     --platform=managed
+#                     --no-traffic
+#                     --memory=1024Mi 
+#                     --image gcr.io/alexismp-pdfmerger/pdfmerger
+#                     pdf-merger
   - id: cloudrun-revision-deploy
     name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -29,9 +36,11 @@ steps:
         "run",
         "deploy",
         "--quiet",
-        "pdf-merger-unite",
+        "--allow-unauthenticated",
         "--region=europe-west1",
         "--platform=managed",
-        # "--no-traffic",
-        "--image=gcr.io/${PROJECT_ID}/pdfmerger-unite:latest"
+        # "--no-traffic",  # can force this but otherwise previous behavior will be preserved
+        "--memory=1024Mi",
+        "--image=gcr.io/${PROJECT_ID}/pdfmerger",
+        "pdf-merger"
       ]
