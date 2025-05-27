@@ -21,8 +21,13 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+// Removed @ResponseBody as ResponseEntity is used
 import org.springframework.web.multipart.MultipartFile;
+
+// Added imports
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
@@ -36,21 +41,34 @@ public class PDFMergerController {
 		this.storageService = storageService;
 	}
 
-	@PostMapping(value = "/pdfmerger", produces = MediaType.APPLICATION_PDF_VALUE)
-	public @ResponseBody() byte[] handleFileUpload(@RequestParam("files") final MultipartFile[] files) {
+	@PostMapping(value = "/pdfmerger") // Removed produces and @ResponseBody
+	public ResponseEntity<byte[]> handleFileUpload(@RequestParam("files") final MultipartFile[] files) {
 		UUID prefix = UUID.randomUUID();
 
 		for (MultipartFile file : files) {
-			if (!file.getOriginalFilename().isEmpty()) { // ignore empty form inputs
+			// Added null check for getOriginalFilename() for robustness
+			if (file.getOriginalFilename() != null && !file.getOriginalFilename().isEmpty()) { // ignore empty form inputs
 				storageService.storePDF(file, prefix.toString());
 			}
 		}
 
 		if (storageService.numberOfFilesToMerge(prefix.toString()) != 0) {
 			storageService.mergeFiles(prefix.toString());
-			return storageService.getMergedPDF(prefix.toString());
+			MergedPdfFile mergedPdfFile = storageService.getMergedPDF(prefix.toString()); // Get the object
+
+			if (mergedPdfFile == null || mergedPdfFile.content() == null) {
+				// This case should ideally not happen if getMergedPDF throws exceptions for errors
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			}
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_PDF);
+			// Ensure filename is properly quoted.
+			headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="" + mergedPdfFile.filename() + """);
+
+			return new ResponseEntity<>(mergedPdfFile.content(), headers, HttpStatus.OK);
 		} else { // no files to merge
-			return null;
+			return ResponseEntity.noContent().build();
 		}
 	}
 

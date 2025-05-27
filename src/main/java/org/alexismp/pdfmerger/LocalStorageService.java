@@ -37,21 +37,59 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LocalStorageService implements StorageService {
-	private final Path rootLocation; // Initialization removed
-	private final String outputFilename = "output.pdf";
+	private final Path rootLocation;
+	private final String outputFilename = "output.pdf"; // Kept for now, but new logic uses dynamic names
 	private Map<String, List<Path>> allFiles;
+	private Map<String, String> generatedFilenamesByPrefix; // New field
 
 	// New constructor for tests and general use
 	public LocalStorageService(Path rootLocation) {
 		this.rootLocation = rootLocation;
 		this.allFiles = new ConcurrentHashMap<>();
+		this.generatedFilenamesByPrefix = new ConcurrentHashMap<>(); // Initialize new map
 		// init() is not called here; will be called by Spring or explicitly in tests.
 	}
 
 	@Autowired
 	public LocalStorageService() {
 		this(Paths.get("./tmp")); // Delegates to the new constructor
+		// Note: generatedFilenamesByPrefix is initialized by the delegating constructor
 	}
+
+	// Helper method to get basename without .pdf extension
+	private String getBaseName(Path path) {
+		if (path == null) {
+			return "unknown";
+		}
+		String filename = path.getFileName().toString();
+		if (filename.toLowerCase().endsWith(".pdf")) {
+			return filename.substring(0, filename.length() - 4);
+		}
+		return filename; // Should not happen if storePDF ensures PDF type
+	}
+
+	// Helper method to generate the dynamic output filename (without idPrefix-)
+	private String generateOutputFilename(List<Path> filePaths) {
+		if (filePaths == null || filePaths.isEmpty()) {
+			return "default_merged.pdf";
+		}
+
+		String baseName1 = getBaseName(filePaths.get(0));
+
+		if (filePaths.size() == 1) {
+			return baseName1 + "_merged.pdf";
+		}
+
+		String baseName2 = getBaseName(filePaths.get(1));
+		if (filePaths.size() == 2) {
+			return baseName1 + "_and_" + baseName2 + "_merged.pdf";
+		}
+
+		// More than 2 files
+		int othersCount = filePaths.size() - 2;
+		return baseName1 + "_and_" + baseName2 + "_and_" + othersCount + "_others_merged.pdf";
+	}
+
 
 	@Override
 	public void init() {
@@ -103,37 +141,58 @@ public class LocalStorageService implements StorageService {
 	}
 
 	@Override
-	public byte[] getMergedPDF(String idPrefix) {
-		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + outputFilename); // Use this.rootLocation.resolve()
-		if (!Files.exists(resultFile)) { // Use Files.exists()
+	public MergedPdfFile getMergedPDF(String idPrefix) { // Changed return type
+		String dynamicOutputFilenameOnly = this.generatedFilenamesByPrefix.get(idPrefix);
+		if (dynamicOutputFilenameOnly == null) {
+			logAndThrowException(HttpStatus.NOT_FOUND,
+					"Merged PDF filename not found for prefix '" + idPrefix +
+					"'. Merge might not have been called or failed to generate a name.", null);
+			// Though logAndThrowException throws, satisfy compiler that a value would be returned or exception thrown.
+			// This path should not be reached if logAndThrowException works as expected.
+			throw new IllegalStateException("logAndThrowException failed to throw for NOT_FOUND.");
+		}
+
+		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + dynamicOutputFilenameOnly);
+		if (!Files.exists(resultFile)) {
 			logAndThrowException(HttpStatus.FORBIDDEN, "Trying to access merged PDF file that doesn't exist: " + resultFile, null);
-			return null;
+			// Similar to above, ensure this path isn't reached if exception is thrown.
+			throw new IllegalStateException("logAndThrowException failed to throw for FORBIDDEN.");
 		}
 		try {
-			// read files in memory before deleting file
-			byte[] result = Files.readAllBytes(resultFile);
+			byte[] resultBytes = Files.readAllBytes(resultFile); // Read into resultBytes
 			Files.delete(resultFile);
-			return result;
+			this.generatedFilenamesByPrefix.remove(idPrefix); // Clean up the stored filename
+			return new MergedPdfFile(resultBytes, dynamicOutputFilenameOnly); // Return new MergedPdfFile
 		} catch (IOException ioe) {
-			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Error serving merged PDF, sorry!", ioe);
-			return null;
+			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Error serving merged PDF for " + resultFile, ioe);
+			// Similar to above, ensure this path isn't reached if exception is thrown.
+			throw new IllegalStateException("logAndThrowException failed to throw for INTERNAL_SERVER_ERROR.");
 		}
 	}
 
 	@Override
 	public void mergeFiles(String idPrefix) {
-		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + outputFilename); // Use this.rootLocation.resolve()
+		List<Path> filesToMerge = allFiles.get(idPrefix);
+
+		if (filesToMerge == null || filesToMerge.isEmpty()) {
+			logAndThrowException(HttpStatus.BAD_REQUEST, "No files found to merge for prefix: " + idPrefix, null);
+			return; // Unreachable due to exception
+		}
+
+		String dynamicOutputFilenameOnly = generateOutputFilename(filesToMerge);
+		this.generatedFilenamesByPrefix.put(idPrefix, dynamicOutputFilenameOnly); // Store for getMergedPDF
+
+		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + dynamicOutputFilenameOnly);
 		final StringBuilder mergeCommand = new StringBuilder("/usr/bin/pdfunite ");
 
 		// add all files in the order they're specified
-		List<Path> filesToMerge = allFiles.get(idPrefix);
-		System.out.println("About to merge " + filesToMerge.size() + " files");
-		for (final Path filename : filesToMerge) {
-			String newFile = "'" + filename.toString() + "' ";
+		System.out.println("About to merge " + filesToMerge.size() + " files into " + resultFile.toString());
+		for (final Path filePath : filesToMerge) { // Changed variable name for clarity
+			String newFile = "'" + filePath.toString() + "' ";
 			mergeCommand.append(newFile);
 		}
 		mergeCommand.append(" ");
-		mergeCommand.append(resultFile.toString()); 	// output goes last with 'pdfunite'
+		mergeCommand.append("'" + resultFile.toString() + "'"); // Enclose output file in quotes for safety
 
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.command("sh", "-c", mergeCommand.toString());
@@ -187,5 +246,14 @@ public class LocalStorageService implements StorageService {
 
 	public List<Path> getFilesToMerge(String idPrefix) {
 		return allFiles.get(idPrefix);
+	}
+
+	// --- Methods for test purposes ---
+	protected void setGeneratedFilenameForPrefix(String idPrefix, String filename) {
+		this.generatedFilenamesByPrefix.put(idPrefix, filename);
+	}
+
+	public String getGeneratedFilenameForPrefix(String idPrefix) {
+		return this.generatedFilenamesByPrefix.get(idPrefix);
 	}
 }
