@@ -256,79 +256,97 @@ class LocalStorageServiceTests {
     @Test
     void testGetMergedPDF_FileExists_ReadsAndDeletes() throws IOException {
         String idPrefix = "prefixForGetMergedPdfSuccess";
-        // outputFilename is "output.pdf" in LocalStorageService, which is used to form the merged file name
-        Path mergedPdfPath = storageService.getRootLocation().resolve(idPrefix + "-" + "output.pdf");
+        String testDynamicFilename = "test_dynamic_output_merged.pdf"; // Defined dynamic filename
+
+        // Manually prime the generatedFilenamesByPrefix map for this test
+        storageService.setGeneratedFilenameForPrefix(idPrefix, testDynamicFilename);
+
+        Path mergedPdfPath = storageService.getRootLocation().resolve(idPrefix + "-" + testDynamicFilename);
         byte[] expectedContent = "dummy merged PDF content".getBytes();
 
-        // Manually create the expected merged file
-        // Parent directory (rootLocation) should already exist due to init() in setUp()
         Files.write(mergedPdfPath, expectedContent);
         assertTrue(Files.exists(mergedPdfPath), "Dummy merged PDF should exist before calling getMergedPDF.");
 
-        byte[] actualContent = storageService.getMergedPDF(idPrefix);
+        // Action: Call getMergedPDF
+        MergedPdfFile mergedPdfFile = storageService.getMergedPDF(idPrefix);
 
-        assertArrayEquals(expectedContent, actualContent, "Returned content should match dummy file content.");
+        // Assertions
+        assertNotNull(mergedPdfFile, "MergedPdfFile object should not be null.");
+        assertEquals(testDynamicFilename, mergedPdfFile.filename(), "Filename in MergedPdfFile should match the dynamic one.");
+        assertArrayEquals(expectedContent, mergedPdfFile.content(), "Returned content should match dummy file content.");
         assertFalse(Files.exists(mergedPdfPath), "Merged PDF file should be deleted after getMergedPDF is called.");
+        assertNull(storageService.getGeneratedFilenameForPrefix(idPrefix),
+                "Entry in generatedFilenamesByPrefix should be removed after getMergedPDF.");
     }
 
     @Test
     void testGetMergedPDF_FileDoesNotExist_ThrowsException() {
-        String idPrefix = "prefixForGetMergedPdfFail";
-        // Ensure no file exists at storageService.getRootLocation().resolve(idPrefix + "-" + "output.pdf")
-        // This is implicitly true for a new, unused idPrefix.
+        String idPrefix = "prefixForGetMergedPdfFailNonExistentName";
+        // Ensure the prefix is not in generatedFilenamesByPrefix (implicitly true for a new prefix)
+        assertNull(storageService.getGeneratedFilenameForPrefix(idPrefix),
+                "Precondition: No generated filename should exist for this prefix.");
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             storageService.getMergedPDF(idPrefix);
-        }, "getMergedPDF should throw ResponseStatusException if merged file doesn't exist.");
+        }, "getMergedPDF should throw ResponseStatusException if no filename is registered for prefix.");
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus(),
-                "Exception status should be FORBIDDEN if merged file doesn't exist.");
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus(), // Status should be NOT_FOUND
+                "Exception status should be NOT_FOUND if no filename registered for prefix.");
     }
 
     @Test
     void testMergeFiles_PerformsCleanup() throws IOException {
         String idPrefix = "prefixForMergeFilesCleanup";
         Path individualFilesDir = storageService.getRootLocation().resolve(idPrefix);
-        // Assuming outputFilename in LocalStorageService is "output.pdf"
-        Path mergedOutputFile = storageService.getRootLocation().resolve(idPrefix + "-" + "output.pdf");
 
         // 1. Store some dummy files
         MockMultipartFile file1 = new MockMultipartFile(
-                "f", // request parameter name
-                "f1.pdf", // original filename
+                "f",
+                "f1.pdf",
                 MediaType.APPLICATION_PDF_VALUE,
-                "c1".getBytes() // content
+                "c1".getBytes()
         );
         assertDoesNotThrow(() -> storageService.storePDF(file1, idPrefix));
         assertTrue(Files.exists(individualFilesDir.resolve("f1.pdf")), "Dummy file1 should exist before mergeFiles.");
-        assertNotNull(storageService.getFilesToMerge(idPrefix), "allFiles map should have entry before mergeFiles.");
+        assertNotNull(storageService.getFilesToMerge(idPrefix), "allFiles map should have entry for individual files before mergeFiles.");
 
-        // 2. Create a dummy merged output file (as if pdfunite created it)
-        // This ensures mergeFiles's finally block doesn't delete what getMergedPDF expects.
-        Files.write(mergedOutputFile, "dummy output from pdfunite".getBytes());
-        assertTrue(Files.exists(mergedOutputFile), "Dummy merged output file should exist before mergeFiles.");
-
-        // 3. Call mergeFiles. It might throw ResponseStatusException if pdfunite fails or is missing.
-        // We are interested in the cleanup performed in its 'finally' block.
+        // 2. Call mergeFiles. It will generate a dynamic name and store it.
+        // It might throw ResponseStatusException if pdfunite fails or is missing.
+        String dynamicName = null;
         try {
             storageService.mergeFiles(idPrefix);
+            // Retrieve the dynamically generated name AFTER mergeFiles has run (and potentially created the file)
+            dynamicName = storageService.getGeneratedFilenameForPrefix(idPrefix);
+            assertNotNull(dynamicName, "Dynamically generated filename should not be null after successful mergeFiles call.");
         } catch (ResponseStatusException e) {
-            // Log or print if needed, but allow test to continue to check cleanup.
             System.out.println("mergeFiles threw ResponseStatusException (expected if pdfunite is missing/fails): " + e.getMessage());
+            // Even if pdfunite fails, mergeFiles should have generated and stored the name.
+            dynamicName = storageService.getGeneratedFilenameForPrefix(idPrefix);
+            assertNotNull(dynamicName, "Dynamically generated filename should still be set even if pdfunite command fails.");
         }
 
-        // 4. Assert cleanup of individual files and directory
-        // The LocalStorageService.mergeFiles() method, in its finally block, deletes individual files
-        // and then the directory.
+        // 3. Create a dummy merged output file using the dynamic name (as if pdfunite created it)
+        // This ensures mergeFiles's finally block doesn't delete what getMergedPDF expects.
+        Path mergedOutputFile = storageService.getRootLocation().resolve(idPrefix + "-" + dynamicName);
+        Files.write(mergedOutputFile, "dummy output from pdfunite".getBytes());
+        assertTrue(Files.exists(mergedOutputFile), "Dummy merged output file (using dynamic name) should exist.");
+
+
+        // 4. Assert cleanup of individual files and directory by mergeFiles's finally block
         assertFalse(Files.exists(individualFilesDir),
                 "Directory for individual files (" + idPrefix + ") should be deleted after mergeFiles.");
 
-        // 5. Assert idPrefix is removed from allFiles map
+        // 5. Assert idPrefix is removed from allFiles map (for individual files)
         assertNull(storageService.getFilesToMerge(idPrefix),
-                "Entry for idPrefix should be removed from allFiles map after mergeFiles.");
+                "Entry for individual files in allFiles map should be removed after mergeFiles.");
 
         // 6. Assert that the main merged output file was NOT deleted by mergeFiles's cleanup
         assertTrue(Files.exists(mergedOutputFile),
-                "The main merged output file should NOT be deleted by mergeFiles's cleanup.");
+                "The main merged output file (using dynamic name) should NOT be deleted by mergeFiles's cleanup.");
+
+        // 7. Assert that the entry in generatedFilenamesByPrefix map IS STILL PRESENT after mergeFiles
+        // (it's getMergedPDF's responsibility to clean that specific entry)
+        assertEquals(dynamicName, storageService.getGeneratedFilenameForPrefix(idPrefix),
+                "Entry in generatedFilenamesByPrefix should persist after mergeFiles completes.");
     }
 }

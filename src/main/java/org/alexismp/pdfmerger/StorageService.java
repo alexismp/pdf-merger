@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface StorageService {
 	void init();
 	void storePDF(MultipartFile file, String idPrefix);
-	byte[] getMergedPDF(String idPrefix);
+	MergedPdfFile getMergedPDF(String idPrefix); // Changed return type
 	void mergeFiles(String idPrefix);
 	int numberOfFilesToMerge(String idPrefix);
 }

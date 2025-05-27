@@ -6,10 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus; // Added import
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
+// Added for MergedPdfFile and HttpHeaders
+import org.alexismp.pdfmerger.MergedPdfFile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException; // Added import
 
@@ -34,9 +37,8 @@ public class PDFMergerControllerTests {
         // The controller generates a prefix and calls numberOfFilesToMerge with it.
         when(storageService.numberOfFilesToMerge(anyString())).thenReturn(0);
 
-        mvc.perform(multipart("/pdfmerger")) // Using existing 'mvc' field
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
+        mvc.perform(multipart("/pdfmerger"))
+                .andExpect(status().isNoContent()); // Changed: Expect 204 No Content
 
         // Verify that storageService.numberOfFilesToMerge was called once
         verify(storageService, times(1)).numberOfFilesToMerge(anyString());
@@ -63,10 +65,15 @@ public class PDFMergerControllerTests {
         doNothing().when(storageService).storePDF(any(MultipartFile.class), anyString());
         when(storageService.numberOfFilesToMerge(anyString())).thenReturn(1);
         doNothing().when(storageService).mergeFiles(anyString());
-        when(storageService.getMergedPDF(anyString())).thenReturn(mergedPdfContent);
+
+        // Mock getMergedPDF to return MergedPdfFile object
+        String expectedFilename = "file1_merged.pdf"; // Based on dynamic generation logic for "file1.pdf"
+        MergedPdfFile mockMergedFile = new MergedPdfFile(mergedPdfContent, expectedFilename);
+        when(storageService.getMergedPDF(anyString())).thenReturn(mockMergedFile);
 
         mvc.perform(multipart("/pdfmerger").file(file))
                 .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="" + expectedFilename + """))
                 .andExpect(content().bytes(mergedPdfContent));
 
         // Verify interactions with storageService
@@ -98,10 +105,16 @@ public class PDFMergerControllerTests {
         doNothing().when(storageService).storePDF(any(MultipartFile.class), anyString());
         when(storageService.numberOfFilesToMerge(anyString())).thenReturn(2); // For two files
         doNothing().when(storageService).mergeFiles(anyString());
-        when(storageService.getMergedPDF(anyString())).thenReturn(mergedPdfContent);
+
+        // Mock getMergedPDF to return MergedPdfFile object
+        // Filenames are "file1.pdf" and "file2.pdf"
+        String expectedFilename = "file1_and_file2_merged.pdf"; // Based on dynamic generation logic
+        MergedPdfFile mockMergedFile = new MergedPdfFile(mergedPdfContent, expectedFilename);
+        when(storageService.getMergedPDF(anyString())).thenReturn(mockMergedFile);
 
         mvc.perform(multipart("/pdfmerger").file(file1).file(file2))
                 .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="" + expectedFilename + """))
                 .andExpect(content().bytes(mergedPdfContent));
 
         // Verify interactions with storageService
@@ -153,8 +166,7 @@ public class PDFMergerControllerTests {
         when(storageService.numberOfFilesToMerge(anyString())).thenReturn(0);
 
         mvc.perform(multipart("/pdfmerger").file(fileWithEmptyName))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andExpect(status().isNoContent()); // Changed: Expect 204 No Content
 
         // Verify interactions with storageService
         verify(storageService, never()).storePDF(any(MultipartFile.class), anyString());
