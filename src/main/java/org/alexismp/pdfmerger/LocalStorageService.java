@@ -37,20 +37,27 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LocalStorageService implements StorageService {
-	private final Path rootLocation = Paths.get("./tmp");
+	private final Path rootLocation; // Initialization removed
 	private final String outputFilename = "output.pdf";
 	private Map<String, List<Path>> allFiles;
 
+	// New constructor for tests and general use
+	public LocalStorageService(Path rootLocation) {
+		this.rootLocation = rootLocation;
+		this.allFiles = new ConcurrentHashMap<>();
+		// init() is not called here; will be called by Spring or explicitly in tests.
+	}
+
 	@Autowired
 	public LocalStorageService() {
-		allFiles = new ConcurrentHashMap<>();
+		this(Paths.get("./tmp")); // Delegates to the new constructor
 	}
 
 	@Override
 	public void init() {
 		try {
-			Files.createDirectories(rootLocation);
-			System.out.println("Created temporary directory...");
+			Files.createDirectories(this.rootLocation); // Use this.rootLocation
+			System.out.println("Created temporary directory at: " + this.rootLocation.toString());
 			// This could also be a good place to test that the binary used is actually available
 		} catch (IOException e) {
 			logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not initialize storage!", e);
@@ -61,14 +68,18 @@ public class LocalStorageService implements StorageService {
 	public void storePDF(MultipartFile file, String idPrefix) {
 		// create a unique temp directory for this set of files and an ordered list of files to merge
 		List<Path> filesToMerge;
-		File dirTmpFiles = new File(rootLocation + "/" + idPrefix);
+		Path userSpecificDir = this.rootLocation.resolve(idPrefix); // Use this.rootLocation.resolve()
 
 		if (allFiles.containsKey(idPrefix)) {
 			filesToMerge = allFiles.get(idPrefix);
 		} else {
 			filesToMerge = Collections.synchronizedList(new ArrayList<Path>());
 			allFiles.put(idPrefix, filesToMerge);
-			dirTmpFiles.mkdir();
+			try {
+				Files.createDirectories(userSpecificDir); // Create directory using Files API
+			} catch (IOException e) {
+				logAndThrowException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create user specific directory " + userSpecificDir, e);
+			}
 		}
 
 		String filename = file.getOriginalFilename();
@@ -81,7 +92,7 @@ public class LocalStorageService implements StorageService {
 		} else {
 			try {
 				InputStream inputStream = file.getInputStream();
-				Path tmpFile = Paths.get(dirTmpFiles.getPath(), file.getOriginalFilename());
+				Path tmpFile = userSpecificDir.resolve(file.getOriginalFilename()); // Use userSpecificDir.resolve()
 				Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
 				System.out.println("Successfully saved " + tmpFile.toString());
 				filesToMerge.add(tmpFile);
@@ -93,9 +104,9 @@ public class LocalStorageService implements StorageService {
 
 	@Override
 	public byte[] getMergedPDF(String idPrefix) {
-		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
-		if (!resultFile.toFile().exists()) {
-			logAndThrowException(HttpStatus.FORBIDDEN, "Trying to access merged PDF file that doesn't exist", null);
+		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + outputFilename); // Use this.rootLocation.resolve()
+		if (!Files.exists(resultFile)) { // Use Files.exists()
+			logAndThrowException(HttpStatus.FORBIDDEN, "Trying to access merged PDF file that doesn't exist: " + resultFile, null);
 			return null;
 		}
 		try {
@@ -111,7 +122,7 @@ public class LocalStorageService implements StorageService {
 
 	@Override
 	public void mergeFiles(String idPrefix) {
-		Path resultFile = Paths.get(rootLocation + idPrefix + "-" + outputFilename);
+		Path resultFile = this.rootLocation.resolve(idPrefix + "-" + outputFilename); // Use this.rootLocation.resolve()
 		final StringBuilder mergeCommand = new StringBuilder("/usr/bin/pdfunite ");
 
 		// add all files in the order they're specified
@@ -143,11 +154,15 @@ public class LocalStorageService implements StorageService {
 			// clean up master Map and delete directory
 			try {
 				allFiles.remove(idPrefix);
-				Path dir = Paths.get(rootLocation + "/" + idPrefix);
-				Files.walk(dir)
-						.map(Path::toFile)
-						.forEach(File::delete);
-				Files.delete(dir);
+				Path dir = this.rootLocation.resolve(idPrefix); // Use this.rootLocation.resolve()
+				// Ensure files within the directory are deleted first
+				if (Files.exists(dir) && Files.isDirectory(dir)) {
+					Files.walk(dir)
+							.sorted(Collections.reverseOrder()) // Delete contents first
+							.map(Path::toFile)
+							.forEach(File::delete);
+				}
+				// Files.delete(dir); // The directory itself will be deleted by @TempDir or further cleanup
 			} catch (IOException e) {
 				System.err.println("Unable to delete all files: " + e);
 			}
@@ -164,5 +179,13 @@ public class LocalStorageService implements StorageService {
 	private void logAndThrowException(HttpStatus status, String msg, Throwable e) {
 		System.err.println(msg);
 		throw new ResponseStatusException(status, msg, e);
+	}
+
+	public Path getRootLocation() {
+		return this.rootLocation;
+	}
+
+	public List<Path> getFilesToMerge(String idPrefix) {
+		return allFiles.get(idPrefix);
 	}
 }
