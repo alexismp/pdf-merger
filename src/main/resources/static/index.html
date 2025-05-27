@@ -26,10 +26,20 @@ limitations under the License.
         <form action="/pdfmerger" enctype="multipart/form-data" method="POST">
             Merge multiple PDF files into one :
             <br/><br/>
-            <input name="files" type="file" />
-            <input name="files" type="file" />
-            <input name="files" type="file" />
-            <input name="files" type="file" />
+            <div id="fileInputsContainer">
+                <!-- Initial file input row -->
+                <div class="fileInputRow">
+                    <input name="files" type="file" class="pdfFile" />
+                    <!-- Thumbnail placeholder (e.g., canvas or img) will be added here later by JS -->
+                    <!-- Remove button will be added here later by JS for dynamic rows -->
+                </div>
+                <!-- Second initial file input row -->
+                <div class="fileInputRow">
+                    <input name="files" type="file" class="pdfFile" />
+                </div>
+            </div>
+            <button type="button" id="addFileButton">Add another file</button>
+            <br/><br/>
             (max 40 MB per file)
             <br/><br/>
             <input type="submit" value="Merge!" />
@@ -43,6 +53,7 @@ limitations under the License.
         <br />Code hosted on <a href="https://github.com/alexismp/pdf-merger" target="_blank">GitHub</a> and
         deployed using <a href="https://cloud.google.com/run" target="_blank">Cloud Run</a>
     </footer>
+    <script src="./main.js" defer></script>
 </body>
 
 </html>

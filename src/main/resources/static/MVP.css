@@ -435,3 +435,52 @@ blockquote footer {
 }
 
 /* Custom styles */
+
+/* Styles for dynamic file inputs */
+.fileInputRow {
+    display: flex; /* Arrange input, canvas, and button in a row */
+    align-items: center; /* Vertically align items in the middle */
+    margin-bottom: 10px; /* Space between rows */
+    padding: 5px;
+    border: 1px solid #eee; /* Optional: slight border for each row */
+    border-radius: 4px;
+}
+
+.fileInputRow input[type="file"].pdfFile {
+    flex-grow: 1; /* Allow file input to take available space */
+    margin-right: 10px;
+}
+
+.thumbnailCanvas {
+    width: 50px;  /* Must match canvas HTML attribute for correct rendering */
+    height: 70px; /* Must match canvas HTML attribute for correct rendering */
+    border: 1px solid #ccc;
+    margin-right: 10px;
+    background-color: #f9f9f9; /* Slight background for empty canvas */
+}
+
+.removeFileButton, #addFileButton {
+    padding: 8px 12px;
+    background-color: #f0f0f0; /* MVP.css might override this, this is a suggestion */
+    color: #333; /* MVP.css might override this */
+    border: 1px solid #ccc; /* MVP.css might override this */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.removeFileButton:hover, #addFileButton:hover {
+    background-color: #e0e0e0; /* MVP.css might override this */
+}
+
+/* Ensure buttons in MVP don't get overly styled by default link styles if they are <a> tags */
+/* This might not be needed if they are <button> elements as they are now */
+
+/* Adjust main form container if needed */
+/* main form { ... } */
+
+/* Spacing for the add button */
+#addFileButton {
+    margin-top: 5px;
+    margin-bottom: 15px; /* Space before "(max 40 MB per file)" text */
+}
